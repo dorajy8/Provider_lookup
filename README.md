@@ -13,18 +13,6 @@ Official Data: Built on CMS NPPES provider registry
 Prerequisites:
 Python 3.8+, PostgreSQL 12+, Django 5.2+
 
-Setup
-bash# Clone and setup
-git clone https://github.com/yourusername/provider_lookup.git
-cd provider_lookup
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-
-# Environment file (.env)
-SECRET_KEY=your_django_secret_key_here
-DB_PASSWORD=your_postgresql_password
-
 # Database
 createdb "Provider LookUp"
 python manage.py migrate
