@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Provider Lookup</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        .header p {
+            font-size: 1rem;
+            color: #6c757d;
+        }
+
+        .filter-note {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            text-align: center;
+            border: 1px solid #bee5eb;
+        }
+
+        .search-card {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+            border: 1px solid #e9ecef;
+        }
+
+        .search-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #495057;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+        }
+
+        .search-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+
+        .results-section {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border: 1px solid #e9ecef;
+            display: none;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .results-count {
+            font-size: 16px;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .loading-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .provider-card {
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 18px;
+            margin-bottom: 15px;
+            transition: border-color 0.2s ease;
+        }
+
+        .provider-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .provider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .provider-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #343a40;
+            margin-bottom: 4px;
+        }
+
+        .provider-type {
+            background: #e7f3ff;
+            color: #0056b3;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .provider-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: #495057;
+        }
+
+        .info-icon {
+            width: 16px;
+            height: 16px;
+            opacity: 0.7;
+        }
+
+        .specialty-badge {
+            background: #f8f9fa;
+            color: #495057;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+            border: 1px solid #dee2e6;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .no-results h3 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .pagination button {
+            padding: 6px 12px;
+            border: 1px solid #dee2e6;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            border-color: #007bff;
+            background: #f8f9ff;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination .active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border: 1px solid #f5c6cb;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .search-form {
+                grid-template-columns: 1fr;
+            }
+            
+            .search-buttons {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .results-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-card, .results-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 Healthcare Provider Lookup</h1>
+            <p>Find individual healthcare providers and specialists</p>
+        </div>
+
+        <div class="filter-note">
+            <strong>Note:</strong> This search is limited to individual healthcare providers only (excludes organizations and institutions). Currently searching 6,881,257 individual providers.
+        </div>
+
+        <div class="search-card">
+            <form id="searchForm" class="search-form">
+                <div class="form-group">
+                    <label for="first_name">First Name</label>
+                    <input type="text" id="first_name" name="first_name" placeholder="Enter first name">
+                </div>
+
+                <div class="form-group">
+                    <label for="last_name">Last Name</label>
+                    <input type="text" id="last_name" name="last_name" placeholder="Enter last name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="city">City</label>
+                    <input type="text" id="city" name="city" placeholder="Enter city">
+                </div>
+                
+                <div class="form-group">
+                    <label for="state">State</label>
+                    <select id="state" name="state">
+                        <option value="">Select State</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="specialty">Specialty</label>
+                    <input type="text" id="specialty" name="specialty" placeholder="e.g., Cardiology, Family Medicine">
+                </div>
+                
+                <div class="form-group">
+                    <label for="zip_code">ZIP Code</label>
+                    <input type="text" id="zip_code" name="zip_code" placeholder="12345 or 12345-6789">
+                </div>
+            </form>
+            
+            <div class="search-buttons">
+                <button type="submit" form="searchForm" class="btn btn-primary">
+                    🔍 Search Providers
+                </button>
+                <button type="button" id="clearForm" class="btn btn-secondary">
+                    🗑️ Clear Form
+                </button>
+                <button type="button" id="advancedSearch" class="btn btn-secondary">
+                    ⚙️ Advanced Search
+                </button>
+            </div>
+        </div>
+
+        <div id="resultsSection" class="results-section">
+            <div id="loadingState" class="loading">
+                <div class="loading-spinner"></div>
+                <p>Searching individual providers...</p>
+            </div>
+            
+            <div id="resultsContent" style="display: none;">
+                <div class="results-header">
+                    <div class="results-count" id="resultsCount">0 individual providers found</div>
+                    <div>
+                        <label for="sortBy">Sort by:</label>
+                        <select id="sortBy">
+                            <option value="name">Name</option>
+                            <option value="location">Location</option>
+                            <option value="specialty">Specialty</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="errorMessage" class="error-message" style="display: none;"></div>
+                <div id="providersList"></div>
+                <div id="pagination" class="pagination"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ProviderLookup {
+            constructor() {
+                this.currentPage = 1;
+                this.pageSize = 10;
+                this.currentResults = null;
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.loadStates();
+                this.checkDatabaseHealth();
+            }
+
+            bindEvents() {
+                document.getElementById('searchForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.performSearch();
+                });
+
+                document.getElementById('clearForm').addEventListener('click', () => {
+                    this.clearForm();
+                });
+
+                document.getElementById('sortBy').addEventListener('change', () => {
+                    this.sortResults();
+                });
+
+                document.getElementById('advancedSearch').addEventListener('click', () => {
+                    this.toggleAdvancedOptions();
+                });
+            }
+
+            async loadStates() {
+                // All US states with abbreviations
+                const allStates = [
+                    'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL',
+                    'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME',
+                    'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH',
+                    'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI',
+                    'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
+                ];
+
+                const stateSelect = document.getElementById('state');
+                
+                // Clear existing options except the first one
+                stateSelect.innerHTML = '<option value="">Select State</option>';
+                
+                // Add all US states
+                allStates.forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state;
+                    option.textContent = state;
+                    stateSelect.appendChild(option);
+                });
+
+                // Optional: Still check which states have providers for informational purposes
+                try {
+                    const response = await fetch('/api/states/');
+                    const data = await response.json();
+                    console.log(`States with individual providers: ${data.states.length} out of ${allStates.length}`);
+                } catch (error) {
+                    console.error('Failed to load states with providers:', error);
+                }
+            }
+
+            async checkDatabaseHealth() {
+                try {
+                    const response = await fetch('/api/health/');
+                    const data = await response.json();
+                    console.log('Database health:', data);
+                    
+                    // Update the filter note with actual count if available
+                    if (data.total_individual_providers) {
+                        const filterNote = document.querySelector('.filter-note');
+                        filterNote.innerHTML = `<strong>Note:</strong> This search is limited to individual healthcare providers only (excludes organizations and institutions). Currently searching ${data.total_individual_providers.toLocaleString()} individual providers.`;
+                    }
+                } catch (error) {
+                    console.error('Database health check failed:', error);
+                }
+            }
+
+            async performSearch() {
+                const formData = new FormData(document.getElementById('searchForm'));
+                const params = new URLSearchParams();
+                
+                // Add form data, but handle the new field names
+                for (const [key, value] of formData.entries()) {
+                    if (value.trim()) {
+                        params.append(key, value.trim());
+                    }
+                }
+                
+                params.append('page', this.currentPage);
+                params.append('page_size', this.pageSize);
+
+                this.showLoading();
+
+                try {
+                    const response = await fetch(`/api/search/?${params.toString()}`);
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        this.currentResults = data;
+                        this.displayResults(data);
+                    } else {
+                        this.showError(data.error || 'Search failed');
+                    }
+                } catch (error) {
+                    this.showError('Network error occurred. Please try again.');
+                    console.error('Search error:', error);
+                }
+            }
+
+            showLoading() {
+                document.getElementById('resultsSection').style.display = 'block';
+                document.getElementById('loadingState').style.display = 'block';
+                document.getElementById('resultsContent').style.display = 'none';
+            }
+
+            displayResults(data) {
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('resultsContent').style.display = 'block';
+                document.getElementById('errorMessage').style.display = 'none';
+
+                const resultsCount = document.getElementById('resultsCount');
+                const providersList = document.getElementById('providersList');
+                
+                if (data.pagination && data.results) {
+                    resultsCount.textContent = `${data.pagination.total_results} individual providers found`;
+                    this.renderProviders(data.results);
+                    this.renderPagination(data.pagination);
+                } else {
+                    resultsCount.textContent = '0 individual providers found';
+                    this.showNoResults();
+                }
+            }
+
+            renderProviders(providers) {
+                const providersList = document.getElementById('providersList');
+                
+                if (!providers || providers.length === 0) {
+                    this.showNoResults();
+                    return;
+                }
+
+                providersList.innerHTML = providers.map(provider => `
+                    <div class="provider-card">
+                        <div class="provider-header">
+                            <div>
+                                <div class="provider-name">${this.escapeHtml(provider.full_name || `${provider.first_name || ''} ${provider.last_name || ''}`.trim() || 'Unknown Provider')}</div>
+                                <span class="provider-type">Individual Provider</span>
+                            </div>
+                            ${provider.specialization ? `<div class="specialty-badge">${this.escapeHtml(provider.specialization)}</div>` : ''}
+                        </div>
+                        
+                        <div class="provider-info">
+                            ${provider.address ? `
+                                <div class="info-item">
+                                    <span class="info-icon">📍</span>
+                                    <span>${this.escapeHtml(provider.address)}</span>
+                                </div>
+                            ` : ''}
+                            
+                            ${provider.phone ? `
+                                <div class="info-item">
+                                    <span class="info-icon">📞</span>
+                                    <span>${this.escapeHtml(provider.phone)}</span>
+                                </div>
+                            ` : ''}
+                            
+                            ${provider.taxonomy_description ? `
+                                <div class="info-item">
+                                    <span class="info-icon">🏥</span>
+                                    <span>${this.escapeHtml(provider.taxonomy_description)}</span>
+                                </div>
+                            ` : ''}
+                            
+                            ${provider.city && provider.state ? `
+                                <div class="info-item">
+                                    <span class="info-icon">🌍</span>
+                                    <span>${this.escapeHtml(provider.city)}, ${this.escapeHtml(provider.state)}</span>
+                                </div>
+                            ` : ''}
+
+                            ${provider.zip_code ? `
+                                <div class="info-item">
+                                    <span class="info-icon">📮</span>
+                                    <span>ZIP: ${this.escapeHtml(provider.zip_code)}</span>
+                                </div>
+                            ` : ''}
+                            
+                            ${provider.distance_miles ? `
+                                <div class="info-item">
+                                    <span class="info-icon">📏</span>
+                                    <span>${provider.distance_miles} miles away</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            renderPagination(pagination) {
+                const paginationDiv = document.getElementById('pagination');
+                
+                if (pagination.total_pages <= 1) {
+                    paginationDiv.innerHTML = '';
+                    return;
+                }
+
+                let paginationHTML = '';
+                
+                // Previous button
+                paginationHTML += `
+                    <button ${!pagination.has_previous ? 'disabled' : ''} 
+                            onclick="providerLookup.goToPage(${pagination.current_page - 1})">
+                        ← Previous
+                    </button>
+                `;
+                
+                // Page numbers
+                const startPage = Math.max(1, pagination.current_page - 2);
+                const endPage = Math.min(pagination.total_pages, pagination.current_page + 2);
+                
+                for (let i = startPage; i <= endPage; i++) {
+                    paginationHTML += `
+                        <button class="${i === pagination.current_page ? 'active' : ''}"
+                                onclick="providerLookup.goToPage(${i})">
+                            ${i}
+                        </button>
+                    `;
+                }
+                
+                // Next button
+                paginationHTML += `
+                    <button ${!pagination.has_next ? 'disabled' : ''}
+                            onclick="providerLookup.goToPage(${pagination.current_page + 1})">
+                        Next →
+                    </button>
+                `;
+                
+                paginationDiv.innerHTML = paginationHTML;
+            }
+
+            goToPage(page) {
+                this.currentPage = page;
+                this.performSearch();
+            }
+
+            showNoResults() {
+                document.getElementById('providersList').innerHTML = `
+                    <div class="no-results">
+                        <h3>No individual providers found</h3>
+                        <p>Try adjusting your search criteria. Remember, we only search individual providers, not organizations.</p>
+                        <p><small>Search tips: Try broader location criteria or check spelling of names.</small></p>
+                    </div>
+                `;
+                document.getElementById('pagination').innerHTML = '';
+            }
+
+            showError(message) {
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('resultsContent').style.display = 'block';
+                
+                const errorDiv = document.getElementById('errorMessage');
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                
+                this.showNoResults();
+            }
+
+            clearForm() {
+                document.getElementById('searchForm').reset();
+                document.getElementById('resultsSection').style.display = 'none';
+                this.currentPage = 1;
+                this.currentResults = null;
+            }
+
+            sortResults() {
+                // This would implement client-side sorting if needed
+                // For now, it could trigger a new search with sort parameters
+                console.log('Sort functionality would be implemented here');
+            }
+
+            toggleAdvancedOptions() {
+                // Placeholder for advanced search functionality
+                alert('Advanced search options would be implemented here. Current search supports:\n\n• First and Last Name\n• City and State\n• ZIP Code\n• Medical Specialty\n\nAll searches are limited to individual providers only.');
+            }
+
+            escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        }
+
+        // Initialize the application
+        const providerLookup = new ProviderLookup();
+    </script>
+</body>
+</html>
